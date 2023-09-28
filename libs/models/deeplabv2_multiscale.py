@@ -32,7 +32,7 @@ class _ASPP(nn.Module):
             nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
-        return sum([stage(x) for stage in self.children()])
+        return torch.cat([stage(x) for stage in self.children()], dim=1)
 
 
 class DeepLabV2(nn.Sequential):
