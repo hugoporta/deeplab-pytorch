@@ -46,6 +46,29 @@ class _ConvBnReLU(nn.Sequential):
             self.add_module("relu", nn.ReLU())
 
 
+class _ConvBnReLUASPP(nn.Sequential):
+    """
+    Cascade of 2D convolution, batch norm, and ReLU.
+    """
+
+    BATCH_NORM = _BATCH_NORM
+
+    def __init__(
+        self, in_ch, out_ch, kernel_size, stride, padding, dilation, relu=True
+    ):
+        super(_ConvBnReLUASPP, self).__init__()
+        self.add_module(
+            "conv",
+            nn.Conv2d(
+                in_ch, out_ch, kernel_size, stride, padding, dilation, bias=False
+            ),
+        )
+        # self.add_module("bn", _BATCH_NORM(out_ch, eps=1e-5, momentum=1 - 0.999))
+
+        if relu:
+            self.add_module("relu", nn.ReLU())
+
+
 class _Bottleneck(nn.Module):
     """
     Bottleneck block of MSRA ResNet.

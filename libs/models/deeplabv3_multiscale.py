@@ -13,10 +13,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .resnet import _ConvBnReLU, _ResLayer, _Stem
+from .resnet import _ConvBnReLU, _ConvBnReLUASPP, _ResLayer, _Stem
 
 
-class _ImagePool(nn.Module):
+class _ImagePool(nn.Module): # TODO: Check exactly what it does / (See Paper) | Potentially do projection at concat phase
     def __init__(self, in_ch, out_ch):
         super().__init__()
         self.pool = nn.AdaptiveAvgPool2d(1)
@@ -44,7 +44,7 @@ class _ASPP(nn.Module):
                 "c{}".format(i + 1),
                 _ConvBnReLU(in_ch, out_ch, 3, 1, padding=rate, dilation=rate),
             )
-        self.stages.add_module("imagepool", _ImagePool(in_ch, out_ch))
+        # self.stages.add_module("imagepool", _ImagePool(in_ch, out_ch))
 
     def forward(self, x):
         return torch.cat([stage(x) for stage in self.stages.children()], dim=1)
@@ -79,10 +79,11 @@ class DeepLabV3(nn.Sequential):
         # self.add_module("fc1", _ConvBnReLU(concat_ch, 256, 1, 1, 0, 1))
         # self.add_module("fc2", nn.Conv2d(256, n_classes, kernel_size=1))
 
-    def freeze_bn(self):
-        for m in self.modules():
+    def freeze_bn(self, freeze_aspp_bn: bool = True):
+        for name, m in self.named_modules():
             if isinstance(m, _ConvBnReLU.BATCH_NORM):
-                m.eval()
+                if not (name.startswith('aspp') and not freeze_aspp_bn):
+                    m.eval()
 
 
 if __name__ == "__main__":
