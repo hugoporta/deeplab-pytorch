@@ -12,6 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .resnet import _ConvBnReLU, _ResLayer, _Stem
+from .vgg16 import VGG16_feature
 
 
 class _ASPP(nn.Module):
@@ -56,6 +57,21 @@ class DeepLabV2(nn.Sequential):
             if isinstance(m, _ConvBnReLU.BATCH_NORM):
                 m.eval()
 
+
+class DeepLabV2_VGG(nn.Sequential):
+    """
+    DeepLab v2: Dilated VGG + ASPP
+    """
+
+    def __init__(self, n_classes, atrous_rates):
+        super(DeepLabV2_VGG, self).__init__()
+        self.add_module("vgg", VGG16_feature())
+        self.add_module("aspp", _ASPP(512, n_classes, atrous_rates))
+
+    def freeze_bn(self):
+        for m in self.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                m.eval()
 
 if __name__ == "__main__":
     model = DeepLabV2(
